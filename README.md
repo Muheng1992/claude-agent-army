@@ -12,7 +12,26 @@ Agent Army is an open-source plugin for [Claude Code CLI](https://claude.ai/code
 
 That's it. Go grab a coffee. Your feature will be ready when you're back.
 
-<!-- TODO: Add a screenshot of autopilot running -->
+### Real example: Building a full-stack monorepo from scratch
+
+![Mission Complete — 93 files, 6102 lines, 47 tests, 12 agents](./docs/images/mission-complete.png)
+
+<details>
+<summary>See the full build process (click to expand)</summary>
+
+**Mission Planning — Auto-decomposed into 5 execution waves:**
+
+![Mission Planning](./docs/images/mission-planning.png)
+
+**Progress Overview — Waves executing in parallel:**
+
+![Progress Overview](./docs/images/progress-overview.png)
+
+**Wave 3 — Tester + Reviewer running, auto-fixing critical issues:**
+
+![Wave 3 Testing](./docs/images/wave3-testing.png)
+
+</details>
 
 ---
 
