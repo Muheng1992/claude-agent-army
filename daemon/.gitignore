@@ -1,0 +1,5 @@
+node_modules/
+dist/
+data/
+dashboard/node_modules/
+src/infrastructure/public/dashboard-dist/

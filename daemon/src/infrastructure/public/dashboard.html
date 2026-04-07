@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daemon Orchestrator Dashboard</title>
+<style>
+:root {
+  --bg0:#0d1117; --bg1:#161b22; --bg2:#21262d;
+  --t1:#c9d1d9; --t2:#8b949e; --brd:#30363d;
+  --blue:#58a6ff; --green:#3fb950; --red:#f85149; --orange:#d29922; --purple:#bc8cff;
+  --st-pend:#484f58; --st-aband:#6e2d2d;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg0);color:var(--t1);line-height:1.5}
+.mono{font-family:'SF Mono','Fira Code',monospace;font-size:.85rem}
+header{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.5rem;background:var(--bg1);border-bottom:1px solid var(--brd)}
+header h1{font-size:1.1rem;font-weight:600;display:flex;align-items:center;gap:.5rem}
+.dot{width:.5rem;height:.5rem;border-radius:50%;background:var(--red);display:inline-block;transition:background .3s}
+.dot.on{background:var(--green)}
+#hdr-m{color:var(--t2)}
+.layout{display:grid;grid-template-columns:16rem 1fr;grid-template-rows:1fr 1fr;height:calc(100vh - 3rem)}
+.sidebar{grid-row:1/3;border-right:1px solid var(--brd);overflow-y:auto}
+.main-top{grid-column:2;overflow-y:auto;padding:1rem}
+.main-bot{grid-column:2;border-top:1px solid var(--brd);overflow-y:auto;padding:1rem}
+.sb-sec{padding:1rem;border-bottom:1px solid var(--brd)}
+.sb-sec h2{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin-bottom:.75rem}
+.irow{display:flex;justify-content:space-between;margin-bottom:.4rem;font-size:.85rem}
+.irow .l{color:var(--t2)}
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:1rem;font-size:.7rem;font-weight:600;text-transform:uppercase}
+.b-pending,.b-paused{background:var(--st-pend);color:#ccc}
+.b-assigned,.b-planning{background:var(--blue);color:#fff}
+.b-running{background:var(--orange);color:#000}
+.b-verifying{background:var(--purple);color:#000}
+.b-completed{background:var(--green);color:#000}
+.b-failed{background:var(--red);color:#fff}
+.b-abandoned,.b-cancelled{background:var(--st-aband);color:#ccc}
+.b-retrying{background:var(--orange);color:#000}
+.pbar{height:.4rem;background:var(--bg0);border-radius:.2rem;overflow:hidden;margin-top:.25rem}
+.pfill{height:100%;transition:width .4s,background .4s;border-radius:.2rem}
+.pg{background:var(--green)}.py{background:var(--orange)}.pr{background:var(--red)}
+.scard{background:var(--bg2);border-radius:.375rem;padding:.6rem;margin-bottom:.5rem;border:1px solid var(--brd)}
+.scard .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem}
+.sid{font-size:.75rem;color:var(--blue)}.smod{font-size:.7rem;color:var(--t2)}
+.stask{font-size:.75rem;color:var(--t2);margin-bottom:.25rem}
+.tlbl{font-size:.7rem;color:var(--t2);text-align:right;margin-top:.1rem}
+#task-dag{display:grid;gap:.75rem}
+.dag-col{display:flex;flex-direction:column;gap:.5rem;align-items:stretch}
+.tc{background:var(--bg2);border-radius:.5rem;padding:.75rem;border-left:3px solid var(--st-pend);transition:border-color .3s,box-shadow .3s;min-width:10rem}
+.tc[data-s=pending]{border-left-color:var(--st-pend)}.tc[data-s=assigned]{border-left-color:var(--blue)}
+.tc[data-s=running]{border-left-color:var(--orange);box-shadow:0 0 8px rgba(210,153,34,.3);animation:pulse 2s infinite}
+.tc[data-s=verifying]{border-left-color:var(--purple)}.tc[data-s=completed]{border-left-color:var(--green)}
+.tc[data-s=failed]{border-left-color:var(--red)}.tc[data-s=retrying]{border-left-color:var(--orange)}
+.tc[data-s=abandoned]{border-left-color:var(--st-aband)}
+.tc .tid{font-size:.7rem;color:var(--t2)}.tc .ttl{font-size:.85rem;margin:.2rem 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:14rem}
+.tc .tdeps{font-size:.65rem;color:var(--t2);margin-top:.3rem}
+.stitle{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin-bottom:.75rem}
+#elog{list-style:none}
+.eentry{display:flex;align-items:baseline;gap:.5rem;padding:.3rem 0;font-size:.8rem;border-bottom:1px solid var(--bg1);animation:fadeIn .3s}
+.etime{color:var(--t2);white-space:nowrap;min-width:5.5rem}
+.etbadge{display:inline-block;padding:.1rem .4rem;border-radius:.2rem;font-size:.65rem;font-weight:600;white-space:nowrap}
+.edesc{color:var(--t1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.et-m{background:var(--blue);color:#000}.et-t{background:var(--green);color:#000}
+.et-s{background:var(--purple);color:#000}.et-h{background:var(--bg2);color:var(--t2);border:1px solid var(--brd)}
+.et-w{background:var(--red);color:#fff}.et-a{background:var(--orange);color:#000}
+.empty{display:flex;align-items:center;justify-content:center;color:var(--t2);font-size:.9rem}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="dot" id="dot" aria-label="SSE connection status"></span> Daemon Orchestrator</h1>
+  <span id="hdr-m" class="mono" aria-live="polite">No active mission</span>
+</header>
+<div class="layout" role="main">
+  <aside class="sidebar" aria-label="Mission info and sessions">
+    <section class="sb-sec" aria-label="Mission information">
+      <h2>Mission</h2>
+      <div id="mi"><div class="empty" style="height:6rem">Waiting for mission...</div></div>
+    </section>
+    <section class="sb-sec" aria-label="Active sessions">
+      <h2>Sessions</h2>
+      <div id="sp"><div class="empty" style="height:4rem">No active sessions</div></div>
+    </section>
+  </aside>
+  <section class="main-top" aria-label="Task DAG">
+    <h2 class="stitle">Tasks</h2>
+    <div id="task-dag"><div class="empty">No tasks</div></div>
+  </section>
+  <section class="main-bot" aria-label="Event log">
+    <h2 class="stitle">Event Log</h2>
+    <ul id="elog" role="log" aria-live="polite"><li class="empty">Waiting for events...</li></ul>
+  </section>
+</div>
+<script>
+const S={mission:null,tasks:[],sessions:[],events:[],connected:false};
+const MAX_EV=200;
+
+async function init(){
+  try{
+    const r=await fetch('/api/state');
+    if(r.ok){const d=await r.json();if(d.missions&&d.missions.length>0){const m=d.missions[0];S.mission=m.mission;S.tasks=m.tasks||[];S.sessions=m.sessions||[];}}
+  }catch{}
+  renderAll();connectSSE();
+}
+
+function connectSSE(){
+  const src=new EventSource('/events');
+  src.onopen=()=>{S.connected=true;updDot()};
+  src.onerror=()=>{S.connected=false;updDot()};
+  const types=['mission:started','mission:completed','mission:failed','mission:cancelled',
+    'task:assigned','task:started','task:completed','task:failed','task:retrying','task:abandoned',
+    'session:spawned','session:recycled','session:completed','session:killed','session:token-updated',
+    'hook:received','health:warning','artifact:created'];
+  for(const t of types) src.addEventListener(t,(e)=>{try{handle(JSON.parse(e.data))}catch{}});
+}
+
+function updDot(){const d=document.getElementById('dot');d.classList.toggle('on',S.connected);d.setAttribute('aria-label',S.connected?'Connected':'Disconnected')}
+
+function handle(ev){
+  S.events.unshift(ev);if(S.events.length>MAX_EV)S.events.pop();
+  const p=ev.payload||{};
+  switch(ev.type){
+    case'mission:started':S.mission={id:p.missionId,name:p.name,status:'running',taskCount:p.taskCount,createdAt:ev.timestamp};renderMI();break;
+    case'mission:completed':if(S.mission)S.mission.status='completed';renderMI();break;
+    case'mission:failed':if(S.mission)S.mission.status='failed';renderMI();break;
+    case'mission:cancelled':if(S.mission)S.mission.status='cancelled';renderMI();break;
+    case'task:assigned':updTask(p.taskId,{status:'assigned',assignedSessionId:p.sessionId});break;
+    case'task:started':updTask(p.taskId,{status:'running',title:p.title});break;
+    case'task:completed':updTask(p.taskId,{status:'completed',title:p.title});renderMI();break;
+    case'task:failed':updTask(p.taskId,{status:'failed',lastError:p.error});break;
+    case'task:retrying':updTask(p.taskId,{status:'retrying',retryCount:p.retryCount});break;
+    case'task:abandoned':updTask(p.taskId,{status:'abandoned'});break;
+    case'session:spawned':upsertSess({sessionId:p.sessionId,taskId:p.taskId,model:p.model,tokenEstimate:0,status:'running'});break;
+    case'session:recycled':rmSess(p.oldSessionId);upsertSess({sessionId:p.newSessionId,taskId:'',model:'',tokenEstimate:0,status:'running'});break;
+    case'session:token-updated':updSessToken(p.sessionId,p.tokenEstimate,p.recycleThreshold);break;
+    case'session:completed':case'session:killed':rmSess(p.sessionId);break;
+  }
+  renderEvEntry(ev);
+}
+
+function updTask(id,patch){const t=S.tasks.find(x=>x.id===id);if(t)Object.assign(t,patch);else S.tasks.push({id,...patch});renderTasks()}
+function upsertSess(s){const i=S.sessions.findIndex(x=>x.sessionId===s.sessionId);if(i>=0)Object.assign(S.sessions[i],s);else S.sessions.push(s);renderSess()}
+function rmSess(id){S.sessions=S.sessions.filter(x=>x.sessionId!==id);renderSess()}
+function updSessToken(id,tok,thr){const s=S.sessions.find(x=>x.sessionId===id);if(s){s.tokenEstimate=tok;s.recycleThreshold=thr}renderSess()}
+
+function renderAll(){renderMI();renderTasks();renderSess()}
+
+function renderMI(){
+  const el=document.getElementById('mi'),hdr=document.getElementById('hdr-m');
+  if(!S.mission){el.innerHTML='<div class="empty" style="height:6rem">Waiting for mission...</div>';hdr.textContent='No active mission';return}
+  const m=S.mission,done=S.tasks.filter(t=>t.status==='completed').length,total=S.tasks.length||m.taskCount||0;
+  const act=S.sessions.filter(s=>s.status==='running').length;
+  const tok=S.sessions.reduce((s,x)=>s+(x.tokenEstimate||0),0);
+  const pct=total>0?Math.round(done/total*100):0;
+  hdr.textContent=sid(m.id);
+  el.innerHTML=`
+    <div class="irow"><span class="l">Status</span><span class="badge b-${m.status}">${m.status}</span></div>
+    <div class="irow"><span class="l">Name</span><span style="font-size:.85rem">${esc(m.name||m.id)}</span></div>
+    <div class="irow"><span class="l">Progress</span><span class="mono">${done}/${total}</span></div>
+    <div class="pbar"><div class="pfill ${pcol(pct)}" style="width:${pct}%"></div></div>
+    <div class="irow" style="margin-top:.5rem"><span class="l">Sessions</span><span class="mono">${act}</span></div>
+    <div class="irow"><span class="l">Tokens</span><span class="mono">${fnum(tok)}</span></div>
+    ${m.createdAt?`<div class="irow"><span class="l">Created</span><span class="mono">${ftime(m.createdAt)}</span></div>`:''}`;
+}
+
+function renderTasks(){
+  const c=document.getElementById('task-dag'),tasks=S.tasks;
+  if(!tasks.length){c.innerHTML='<div class="empty">No tasks</div>';return}
+  const lvls=topoLevels(tasks);c.innerHTML='';c.style.gridTemplateColumns=`repeat(${lvls.length},1fr)`;
+  for(const lv of lvls){const col=document.createElement('div');col.className='dag-col';for(const t of lv)col.appendChild(mkTC(t));c.appendChild(col)}
+}
+
+function mkTC(task){
+  const d=document.createElement('div');d.className='tc';d.dataset.s=task.status||'pending';
+  d.setAttribute('role','article');d.setAttribute('aria-label',`Task ${task.id}: ${task.status||'pending'}`);
+  let tb='';
+  if(task.status==='running'&&task.assignedSessionId){
+    const ss=S.sessions.find(s=>s.sessionId===task.assignedSessionId);
+    if(ss&&ss.recycleThreshold){const p=Math.min(100,Math.round(ss.tokenEstimate/ss.recycleThreshold*100));tb=`<div style="margin-top:.4rem"><div class="pbar"><div class="pfill ${pcol(p)}" style="width:${p}%"></div></div><span class="tlbl">${p}%</span></div>`}
+  }
+  const deps=(task.dependencies||[]).length?`<div class="tdeps">deps: ${task.dependencies.map(sid).join(', ')}</div>`:'';
+  d.innerHTML=`<div class="tid mono">${sid(task.id)}</div><div class="ttl">${esc(task.title||task.id)}</div><span class="badge b-${task.status||'pending'}">${task.status||'pending'}</span>${deps}${tb}`;
+  return d;
+}
+
+function topoLevels(tasks){
+  const lvls=[],placed=new Set();let rem=[...tasks];
+  // CONSTRAINT: 循環依賴保護 — 最多迭代 tasks.length 次
+  for(let i=0;i<tasks.length&&rem.length;i++){
+    const lv=[],next=[];
+    for(const t of rem){if((t.dependencies||[]).filter(d=>!placed.has(d)).length===0){lv.push(t);placed.add(t.id)}else next.push(t)}
+    if(!lv.length){lvls.push(next);break}
+    lvls.push(lv);rem=next;
+  }
+  return lvls;
+}
+
+function renderSess(){
+  const el=document.getElementById('sp'),act=S.sessions.filter(s=>s.status==='running'||s.status==='spawning');
+  if(!act.length){el.innerHTML='<div class="empty" style="height:4rem">No active sessions</div>';return}
+  el.innerHTML=act.map(s=>{const p=s.recycleThreshold?Math.min(100,Math.round(s.tokenEstimate/s.recycleThreshold*100)):0;
+    return`<div class="scard" role="article" aria-label="Session ${sid(s.sessionId)}"><div class="sh"><span class="sid mono">${sid(s.sessionId)}</span><span class="smod mono">${esc(s.model||'?')}</span></div><div class="stask mono">Task: ${sid(s.taskId||'?')}</div><div class="pbar"><div class="pfill ${pcol(p)}" style="width:${p}%"></div></div><div class="tlbl">${fnum(s.tokenEstimate||0)} tokens (${p}%)</div></div>`}).join('');
+}
+
+function renderEvEntry(ev){
+  const log=document.getElementById('elog');
+  if(log.querySelector('.empty'))log.innerHTML='';
+  const li=document.createElement('li');li.className='eentry';
+  li.innerHTML=`<span class="etime mono">${ftime(ev.timestamp)}</span><span class="etbadge ${etcls(ev.type)}">${ev.type}</span><span class="edesc">${esc(edesc(ev))}</span>`;
+  log.prepend(li);
+  while(log.children.length>MAX_EV)log.removeChild(log.lastChild);
+}
+
+function edesc(ev){
+  const p=ev.payload||{};
+  switch(ev.type){
+    case'mission:started':return`${p.name||p.missionId} (${p.taskCount} tasks)`;
+    case'mission:completed':return`${p.completedTasks}/${p.totalTasks} tasks completed`;
+    case'mission:failed':return p.reason||'Mission failed';
+    case'mission:cancelled':return`Killed ${p.killedSessions} sessions`;
+    case'task:assigned':return`${sid(p.taskId)} -> ${sid(p.sessionId)} (${p.model})`;
+    case'task:started':return`${sid(p.taskId)}: ${p.title||''}`;
+    case'task:completed':return`${sid(p.taskId)}: ${p.title||''} done`;
+    case'task:failed':return`${sid(p.taskId)}: ${p.error||'failed'}`;
+    case'task:retrying':return`${sid(p.taskId)}: retry ${p.retryCount}/${p.maxRetries}`;
+    case'task:abandoned':return`${sid(p.taskId)}: ${p.reason||'abandoned'}`;
+    case'session:spawned':return`${sid(p.sessionId)} for ${sid(p.taskId)} (${p.model})`;
+    case'session:recycled':return`${sid(p.oldSessionId)} -> ${sid(p.newSessionId)}: ${p.reason}`;
+    case'session:token-updated':return`${sid(p.sessionId)}: ${fnum(p.tokenEstimate)}/${fnum(p.recycleThreshold)} (${Math.round((p.utilization||0)*100)}%)`;
+    case'session:completed':return`${sid(p.sessionId)} completed`;
+    case'session:killed':return`${sid(p.sessionId)} killed (PID ${p.processId})`;
+    case'hook:received':return`${p.hookType}: ${p.summary||''}`;
+    case'health:warning':return p.message||'Health warning';
+    case'artifact:created':return`${p.artifactType} for ${sid(p.taskId)}: ${p.contentPreview||''}`;
+    default:return JSON.stringify(p).slice(0,80);
+  }
+}
+
+function etcls(t){
+  if(t.startsWith('mission:'))return'et-m';if(t.startsWith('task:'))return'et-t';
+  if(t.startsWith('session:'))return'et-s';if(t.startsWith('hook:'))return'et-h';
+  if(t.startsWith('health:'))return'et-w';if(t.startsWith('artifact:'))return'et-a';return'et-h';
+}
+
+// WHY: 顯示 prefix 首字母 + 最後片段即可辨識，保持 UI 簡潔
+function sid(id){if(!id)return'?';const p=String(id).split('-');if(p.length>=3)return p[0][0]+'-'+p[p.length-1];return id.length>10?id.slice(0,4)+'..'+id.slice(-4):id}
+function ftime(ts){if(!ts)return'--:--:--';try{return new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}catch{return'--:--:--'}}
+function fnum(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return String(n)}
+function pcol(p){return p<50?'pg':p<75?'py':'pr'}
+function esc(s){const e=document.createElement('span');e.textContent=s||'';return e.innerHTML}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>

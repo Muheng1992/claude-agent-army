@@ -1,0 +1,24 @@
+{
+  "// Agent Army Workspace Configuration": "For multi-project coordination",
+  "// Location": "Place at ~/.claude/workspace.json",
+  "workspace_name": "{WORKSPACE_NAME}",
+  "projects": [
+    {
+      "name": "{PROJECT_1_NAME}",
+      "path": "{PROJECT_1_PATH}",
+      "description": "{PROJECT_1_DESCRIPTION}",
+      "type": "primary"
+    },
+    {
+      "name": "{PROJECT_2_NAME}",
+      "path": "{PROJECT_2_PATH}",
+      "description": "{PROJECT_2_DESCRIPTION}",
+      "type": "secondary"
+    }
+  ],
+  "shared_conventions": {
+    "commit_format": "conventional",
+    "branch_prefix": true,
+    "quality_gate_before_push": true
+  }
+}

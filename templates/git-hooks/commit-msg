@@ -1,0 +1,38 @@
+#!/bin/sh
+# Agent Army — Commit Message Hook
+# Enforces Conventional Commits format
+
+commit_msg_file="$1"
+commit_msg=$(head -1 "$commit_msg_file")
+
+# Conventional Commits pattern: type(scope)?: description
+# Types: feat, fix, docs, refactor, test, chore, perf, style, build, ci, revert
+pattern='^(feat|fix|docs|refactor|test|chore|perf|style|build|ci|revert)(\([a-z0-9-]+\))?!?: .{1,}'
+
+if ! echo "$commit_msg" | grep -Eq "$pattern"; then
+    echo "❌ Invalid commit message format."
+    echo ""
+    echo "Expected: <type>(<scope>): <description>"
+    echo ""
+    echo "Types: feat, fix, docs, refactor, test, chore, perf, style, build, ci, revert"
+    echo ""
+    echo "Examples:"
+    echo "  feat: add user authentication"
+    echo "  fix(api): resolve timeout issue"
+    echo "  docs: update README"
+    echo "  refactor!: redesign database schema"
+    echo ""
+    echo "Your message: $commit_msg"
+    exit 1
+fi
+
+# Check description length (max 72 chars for first line)
+# Use awk to count characters (not bytes) for UTF-8 compatibility
+desc_length=$(echo "$commit_msg" | awk '{print length}' | head -1)
+if [ "$desc_length" -gt 72 ]; then
+    echo "⚠️  Commit message first line is too long ($desc_length chars, max 72)."
+    echo "   Move details to the commit body."
+    exit 1
+fi
+
+echo "✅ Commit message format valid"

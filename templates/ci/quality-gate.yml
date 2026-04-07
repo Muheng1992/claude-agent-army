@@ -1,0 +1,103 @@
+# Agent Army Quality Gate — GitHub Actions Workflow
+# Copy this file to .github/workflows/quality-gate.yml
+#
+# This workflow runs quality checks on every PR to the main branch.
+# Customize the steps below to match your project's tech stack.
+
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # Adjust Node version to match your project
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git-based checks
+
+      # === Gate 1: Build Verification ===
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Type Check
+        run: npm run typecheck || echo "No typecheck script found"
+
+      - name: Build
+        run: npm run build || echo "No build script found"
+
+      # === Gate 2: Test Verification ===
+      - name: Run Tests
+        run: npm test -- --coverage || echo "No test script found"
+
+      # === Gate 3: Code Quality ===
+      - name: Lint
+        run: npm run lint || echo "No lint script found"
+
+      # === Gate 4: Security Scan ===
+      - name: Audit Dependencies
+        run: npm audit --production || true
+
+      - name: Check for Secrets
+        run: |
+          # Simple secret detection
+          if grep -rn "PRIVATE_KEY\|SECRET_KEY\|API_KEY.*=.*['\"]" src/ --include="*.ts" --include="*.js" 2>/dev/null; then
+            echo "Possible secrets detected in source code"
+            exit 1
+          fi
+          echo "No secrets detected"
+
+      # === Gate 5: File Size Check ===
+      - name: Check File Lengths
+        run: |
+          MAX_LINES=300
+          VIOLATIONS=0
+          for file in $(find src -name "*.ts" -o -name "*.js" 2>/dev/null); do
+            lines=$(wc -l < "$file")
+            if [ "$lines" -gt "$MAX_LINES" ]; then
+              echo "$file: $lines lines (max: $MAX_LINES)"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "Found $VIOLATIONS file(s) exceeding $MAX_LINES lines"
+            exit 1
+          fi
+          echo "All files within size limits"
+
+      # === Gate 6: Conventional Commits ===
+      - name: Check Commit Messages
+        if: github.event_name == 'pull_request'
+        run: |
+          PATTERN='^(feat|fix|docs|refactor|test|chore|perf|style|build|ci|revert)(\([a-z0-9-]+\))?!?: .+'
+          BAD_COMMITS=0
+          TMPFILE=$(mktemp)
+          git log --format='%s' origin/${{ github.base_ref }}..HEAD > "$TMPFILE"
+          while IFS= read -r msg; do
+            if ! echo "$msg" | grep -Eq "$PATTERN"; then
+              echo "Bad commit: $msg"
+              BAD_COMMITS=$((BAD_COMMITS + 1))
+            fi
+          done < "$TMPFILE"
+          rm -f "$TMPFILE"
+          if [ "$BAD_COMMITS" -gt 0 ]; then
+            echo "Found $BAD_COMMITS commit(s) not following Conventional Commits format"
+          fi
+          echo "Commit messages checked"

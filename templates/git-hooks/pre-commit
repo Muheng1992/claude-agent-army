@@ -1,0 +1,52 @@
+#!/bin/sh
+# Agent Army — Pre-commit Hook
+# Enforces coding standards before each commit
+
+# Check staged files for line count violations (max 300 lines)
+MAX_LINES=300
+VIOLATIONS=""
+
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js|py|go|rs|java|rb)$'); do
+    lines=$(git show ":$file" | wc -l | tr -d ' ')
+    if [ "$lines" -gt "$MAX_LINES" ]; then
+        VIOLATIONS="$VIOLATIONS\n  $file: $lines lines (max: $MAX_LINES)"
+    fi
+done
+
+if [ -n "$VIOLATIONS" ]; then
+    echo "❌ File length violations detected:"
+    echo "$VIOLATIONS"
+    echo ""
+    echo "Refactor files to stay under $MAX_LINES lines."
+    echo "Use 'git commit --no-verify' to bypass (not recommended)."
+    exit 1
+fi
+
+# Check for common secrets patterns in staged files
+SECRETS_PATTERN='(PRIVATE_KEY|SECRET_KEY|API_KEY|PASSWORD|TOKEN|credential)[[:space:]]*[=:][[:space:]]*["\x27][^\s]+'
+for file in $(git diff --cached --name-only --diff-filter=ACM); do
+    # Skip binary files and common non-code files
+    case "$file" in
+        *.lock|*.sum|*.png|*.jpg|*.gif|*.ico|*.woff*|*.ttf) continue ;;
+    esac
+
+    if git show ":$file" | grep -iE "$SECRETS_PATTERN" > /dev/null 2>&1; then
+        echo "⚠️  Possible secret detected in: $file"
+        echo "   Review carefully before committing."
+        echo "   Use 'git commit --no-verify' to bypass if this is a false positive."
+        exit 1
+    fi
+done
+
+# Check for .env files being committed
+for file in $(git diff --cached --name-only); do
+    case "$file" in
+        .env|.env.*|*.env)
+            echo "❌ Attempting to commit environment file: $file"
+            echo "   Add it to .gitignore instead."
+            exit 1
+            ;;
+    esac
+done
+
+echo "✅ Pre-commit checks passed"

@@ -1,0 +1,26 @@
+{
+  "name": "@agent-army/daemon",
+  "version": "0.1.0",
+  "description": "Daemon Orchestrator for Claude Code CLI sessions with external context management",
+  "type": "module",
+  "main": "dist/infrastructure/main.js",
+  "bin": {
+    "daemon": "dist/bin/daemon.js"
+  },
+  "scripts": {
+    "build": "tsc && cp -r src/infrastructure/public dist/infrastructure/public",
+    "start": "node dist/infrastructure/main.js",
+    "dev": "tsx src/infrastructure/main.ts",
+    "daemon": "tsx src/bin/daemon.ts",
+    "test": "node --import tsx --test 'src/**/*.test.ts'"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0"
+  }
+}

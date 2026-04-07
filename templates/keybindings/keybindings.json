@@ -1,0 +1,41 @@
+{
+  "// Agent Army Keybindings": "Copy to ~/.claude/keybindings.json or merge with existing",
+  "// Note": "These are examples — customize to your preference",
+  "bindings": [
+    {
+      "key": "ctrl+shift+a",
+      "command": "skill:agent-army:assemble",
+      "description": "Launch Agent Army assembler"
+    },
+    {
+      "key": "ctrl+shift+q",
+      "command": "skill:agent-army:quality-gate",
+      "description": "Run quality gate checks"
+    },
+    {
+      "key": "ctrl+shift+r",
+      "command": "skill:agent-army:code-review",
+      "description": "Start code review"
+    },
+    {
+      "key": "ctrl+shift+t",
+      "command": "skill:agent-army:tdd",
+      "description": "Start TDD cycle"
+    },
+    {
+      "key": "ctrl+shift+f",
+      "command": "skill:agent-army:fix",
+      "description": "Smart fix"
+    },
+    {
+      "key": "ctrl+shift+s",
+      "command": "skill:agent-army:sprint",
+      "description": "Sprint planning"
+    },
+    {
+      "key": "ctrl+shift+c",
+      "command": "skill:agent-army:context-sync",
+      "description": "Context sync"
+    }
+  ]
+}

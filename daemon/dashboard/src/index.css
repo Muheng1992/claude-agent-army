@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+@theme {
+  /* 底色：純黑 */
+  --color-void: #000000;
+  --color-abyss: #0a0a0a;
+  --color-rust-dark: #1a1410;
+  --color-rust-mid: #2a1f18;
+
+  /* 斑駁金屬色 */
+  --color-patina-gold: #c4956a;
+  --color-patina-copper: #8b5e3c;
+  --color-patina-verdigris: #3d6b5a;
+  --color-decay-green: #2a4a35;
+
+  /* 退化霓虹 */
+  --color-neon-fade-cyan: #1a6b6b;
+  --color-neon-fade-pink: #6b2a4a;
+  --color-neon-fade-amber: #8b6a2a;
+
+  /* 閃爍高亮 */
+  --color-flicker-cyan: #00cccc;
+  --color-flicker-amber: #ffaa44;
+  --color-flicker-red: #cc3333;
+
+  /* 文字 */
+  --color-text-primary: #b0a898;
+  --color-text-dim: #5a5248;
+  --color-text-bright: #d4c8b8;
+
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #000000;
+  color: #b0a898;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  letter-spacing: 0.02em;
+  overflow-x: hidden;
+}
+
+/* WHY: 透過偽元素覆蓋薄膜顆粒紋理，模擬老舊 CRT 顯示器的雜訊感 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image:
+    repeating-conic-gradient(#b0a898 0% 25%, transparent 0% 50%);
+  background-size: 3px 3px;
+  animation: noise 0.5s steps(4) infinite;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a1410;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a1f18;
+}
+
+/* ── 文字效果 ── */
+.neon-fade-cyan {
+  color: #1a6b6b;
+  text-shadow: 0 0 4px #1a6b6b80;
+}
+
+.neon-fade-amber {
+  color: #8b6a2a;
+  text-shadow: 0 0 4px #8b6a2a80;
+}
+
+.neon-fade-pink {
+  color: #6b2a4a;
+  text-shadow: 0 0 4px #6b2a4a80;
+}
+
+.text-flicker-cyan {
+  color: #00cccc;
+  text-shadow: 0 0 6px #00cccc60, 0 0 20px #00cccc30;
+  animation: flicker 3s infinite;
+}
+
+.text-flicker-amber {
+  color: #ffaa44;
+  text-shadow: 0 0 6px #ffaa4460, 0 0 20px #ffaa4430;
+  animation: flicker 4s infinite;
+}
+
+/* ── 掃描線 ── */
+.scanlines {
+  position: relative;
+}
+
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(26, 20, 16, 0.15) 2px,
+    rgba(26, 20, 16, 0.15) 4px
+  );
+  z-index: 1;
+}
+
+/* ── 動畫 ── */
+@keyframes glitch {
+  0%, 88%, 100% {
+    transform: translate(0);
+    text-shadow: 0 0 4px #1a6b6b80;
+  }
+  90% {
+    transform: translate(-3px, 1px);
+    text-shadow: -3px 0 #6b2a4a, 3px 0 #3d6b5a;
+  }
+  92% {
+    transform: translate(3px, -1px);
+    text-shadow: 3px 0 #cc3333, -3px 0 #2a4a35;
+  }
+  94% {
+    transform: translate(-2px, 2px);
+    text-shadow: -2px 0 #8b6a2a, 2px 0 #1a6b6b;
+  }
+  96% {
+    transform: translate(1px, -2px);
+    text-shadow: 1px 0 #6b2a4a, -1px 0 #3d6b5a;
+  }
+}
+
+.glitch-text {
+  animation: glitch 4s infinite;
+}
+
+@keyframes flicker {
+  0%, 93%, 100% { opacity: 1; }
+  94% { opacity: 0.7; }
+  95% { opacity: 0.95; }
+  96% { opacity: 0.6; }
+  97% { opacity: 0.9; }
+  98% { opacity: 0.75; }
+  99% { opacity: 0.85; }
+}
+
+@keyframes noise {
+  0% { background-position: 0 0; }
+  25% { background-position: -2px 1px; }
+  50% { background-position: 1px -1px; }
+  75% { background-position: -1px 2px; }
+  100% { background-position: 2px 0; }
+}
+
+@keyframes crt-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 3px currentColor; }
+  50% { box-shadow: 0 0 8px currentColor, 0 0 16px currentColor; }
+}
+
+.pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -20; }
+}
+
+.dash-flow {
+  animation: dash-flow 1.5s linear infinite;
+}
+
+@keyframes border-charge {
+  0% { border-color: #1a1410; }
+  50% { border-color: #8b6a2a; }
+  100% { border-color: #1a1410; }
+}
+
+.border-charge {
+  animation: border-charge 2s ease-in-out infinite;
+}

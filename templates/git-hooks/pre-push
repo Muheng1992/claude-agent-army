@@ -1,0 +1,16 @@
+#!/bin/sh
+# Agent Army — Pre-push Hook
+# Reminds to run quality gate before pushing
+
+echo "📋 Agent Army Pre-push Reminder"
+echo "================================"
+echo ""
+echo "Before pushing, have you:"
+echo "  ☐ Run tests? (npm test / pytest / go test)"
+echo "  ☐ Run quality gate? (/agent-army:quality-gate)"
+echo "  ☐ Reviewed your changes? (git diff)"
+echo ""
+echo "Push will continue in 2 seconds..."
+echo "(This is a reminder only — not blocking)"
+sleep 2
+exit 0

@@ -1,0 +1,45 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git push*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Pre-push reminder: Have you run /agent-army:quality-gate? Consider running it before pushing to ensure code quality.\"}'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Reminder: Verify Clean Architecture compliance — dependencies must point inward only.\"}'"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(npm install*|yarn add*|pnpm add*|pip install*|go get*|cargo add*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"New dependency added. Verify: 1) License compatibility 2) Known CVEs (npm audit / pip-audit) 3) Bundle size impact 4) Is it actively maintained?\"}'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Before stopping: Have all reports been filed in docs/reports/? Is docs/INDEX.md updated?\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}
