@@ -1,114 +1,116 @@
-# Agent Army — Claude Code 多 Agent 自動化開發團隊
+**English** | **[繁體中文](./README.zh-TW.md)**
 
-> **一行指令，讓 12+ 個 AI agent 幫你完成整個開發流程。**
+# Agent Army — Multi-Agent Development Team for Claude Code
 
-Agent Army 是 [Claude Code CLI](https://claude.ai/code) 的開源 plugin。安裝後，你只需要描述你要做什麼，它會自動拆解任務、分配 agent、並行開發、跑測試、做 code review——全部自動化。
+> **One command. 12+ AI agents build your feature automatically.**
+
+Agent Army is an open-source plugin for [Claude Code CLI](https://claude.ai/code). Describe what you want to build, and it automatically decomposes tasks, assigns specialized agents, runs parallel development, tests, and code reviews — fully autonomous.
 
 ```bash
 /agent-army:autopilot Build authentication module with JWT and role-based access control
 ```
 
-就這樣。你去喝杯咖啡，回來功能已經建好了。
+That's it. Go grab a coffee. Your feature will be ready when you're back.
 
-<!-- TODO: 加一張 autopilot 跑起來的截圖 -->
+<!-- TODO: Add a screenshot of autopilot running -->
 
 ---
 
-## 它跟 Claude Code 原生的 subagent 有什麼不同？
+## How is this different from Claude Code's native subagents?
 
-| | Claude Code 原生 | Agent Army |
+| | Native Claude Code | Agent Army |
 |---|---|---|
-| **你的角色** | 你是 tech lead，手動決定 spawn 誰、做什麼 | 你是老闆，agent 團隊自己運轉 |
-| **角色分工** | 只有 general-purpose agent | 5 個專業角色各司其職 |
-| **流程** | 你自己指揮 | 自動化 wave 執行（設計 → 實作 → 測試 → review） |
-| **品質保證** | 靠你自己記得要測試 | TDD + code review + security audit 內建強制執行 |
-| **失敗處理** | agent 掛了你自己處理 | 自動偵測 + 分類 + 重試 + 降級 |
-| **跨 session** | 每次從零開始 | context-sync 保留上下文 |
+| **Your role** | You're the tech lead — manually decide who to spawn and what to do | You're the boss — the agent team runs itself |
+| **Specialization** | Only general-purpose agents | 5 specialized roles, each with dedicated expertise |
+| **Workflow** | You orchestrate everything | Automated wave execution (design → implement → test → review) |
+| **Quality assurance** | You remember to run tests (hopefully) | TDD + code review + security audit built-in and enforced |
+| **Failure handling** | Agent crashes? Your problem | Auto-detect + classify + retry + graceful degradation |
+| **Cross-session** | Starts from scratch every time | context-sync preserves state across sessions |
 
 ---
 
-## 5 個專業 Agent
+## 5 Specialized Agents
 
-| Agent | 角色 | 能力範圍 |
-|-------|------|---------|
-| **Tech Lead** | 指揮官 | 拆解任務、分配 agent、review 品質、解決衝突。**不寫代碼**——只指揮 |
-| **Architect** | 設計師 | 系統設計、API 設計、資料建模。只產出設計，不實作 |
-| **Implementer** | 工程師 | 寫代碼、整合、解 merge conflict。可並行多個 |
-| **Tester** | 品管 | 單元測試 + 整合測試 + code review + 安全審計（OWASP） |
-| **Documenter** | 文件 | 撰寫文件、產出報告、歸檔管理 |
+| Agent | Role | Scope |
+|-------|------|-------|
+| **Tech Lead** | Orchestrator | Decomposes tasks, assigns agents, reviews quality, resolves conflicts. **Writes no code** — only coordinates |
+| **Architect** | Designer | System design, API design, data modeling. Produces designs, never implements |
+| **Implementer** | Engineer | Writes code, integrates, resolves merge conflicts. Multiple can run in parallel |
+| **Tester** | QA | Unit tests + integration tests + code review + security audit (OWASP) |
+| **Documenter** | Docs | Writes documentation, generates reports, manages filing |
 
-Tech Lead 根據任務複雜度自動分級（S/A/B/C），決定要 spawn 多少 agent：
+The Tech Lead automatically grades task complexity (S/A/B/C) and decides how many agents to spawn:
 
-| 等級 | 規模 | 團隊配置 |
-|------|------|---------|
-| **S** | 改一個檔案 | 不 spawn，直接做 |
-| **A** | 1-3 個檔案 | implementer + tester |
-| **B** | 4-15 個檔案 | architect + implementer × 1-3 + tester + documenter |
-| **C** | 15+ 個檔案 | 全員出動，implementer 可達 5 個並行 |
-
----
-
-## 14 個 Skill（Slash Commands）
-
-### 核心開發流程
-
-| 指令 | 用途 |
-|------|------|
-| `/agent-army:autopilot [任務描述]` | **全自動模式**：拆任務 → 建 backlog → 啟動 tmux 迴圈 → 逐一執行直到完成 |
-| `/agent-army:assemble [feature]` | 啟動 agent 團隊開發一個功能 |
-| `/agent-army:sprint [feature]` | Sprint 規劃與任務拆解 |
-| `/agent-army:tdd [feature]` | TDD Red-Green-Refactor 強制執行 |
-| `/agent-army:fix [error]` | 智慧問題診斷與修復 |
-
-### 品質保證
-
-| 指令 | 用途 |
-|------|------|
-| `/agent-army:quality-gate [scope]` | 品質關卡檢查（6 道 gate） |
-| `/agent-army:integration-test [scope]` | 整合測試協調（5 階段） |
-| `/agent-army:code-review [scope]` | Code review 協調（4 階段） |
-
-### 專案管理
-
-| 指令 | 用途 |
-|------|------|
-| `/agent-army:setup [project]` | 初始化專案（安裝模板、git hooks、CI） |
-| `/agent-army:onboard [project]` | 掃描專案結構，產出 memory bootstrap |
-| `/agent-army:context-sync [mode]` | 跨 session 上下文同步（save / load / team） |
-| `/agent-army:retrospective` | 任務回顧與自我改進 |
-| `/agent-army:changelog [spec]` | 從 git 歷史自動產出 changelog |
-| `/agent-army:timesheet [range]` | 工時分析與每日報告 |
+| Grade | Scale | Team Composition |
+|-------|-------|-----------------|
+| **S** | Single file change | No spawn — handles directly |
+| **A** | 1-3 files | implementer + tester |
+| **B** | 4-15 files | architect + implementer ×1-3 + tester + documenter |
+| **C** | 15+ files | Full team, up to 5 parallel implementers |
 
 ---
 
-## 安裝
+## 14 Skills (Slash Commands)
 
-### 方式一：透過 Marketplace（推薦）
+### Core Development
+
+| Command | Purpose |
+|---------|---------|
+| `/agent-army:autopilot [task]` | **Full auto mode**: decompose → backlog → tmux loop → execute until done |
+| `/agent-army:assemble [feature]` | Launch agent team for a feature |
+| `/agent-army:sprint [feature]` | Sprint planning & task decomposition |
+| `/agent-army:tdd [feature]` | TDD Red-Green-Refactor enforcement |
+| `/agent-army:fix [error]` | Smart diagnosis & resolution |
+
+### Quality Assurance
+
+| Command | Purpose |
+|---------|---------|
+| `/agent-army:quality-gate [scope]` | Quality checkpoint (6 gates) |
+| `/agent-army:integration-test [scope]` | Integration test orchestration (5 stages) |
+| `/agent-army:code-review [scope]` | Code review orchestration (4 stages) |
+
+### Project Management
+
+| Command | Purpose |
+|---------|---------|
+| `/agent-army:setup [project]` | Initialize project (templates, git hooks, CI) |
+| `/agent-army:onboard [project]` | Scan project structure, generate memory bootstrap |
+| `/agent-army:context-sync [mode]` | Cross-session context sync (save / load / team) |
+| `/agent-army:retrospective` | Mission retrospective & self-improvement |
+| `/agent-army:changelog [spec]` | Auto-generate changelog from git history |
+| `/agent-army:timesheet [range]` | Work time analysis & daily report |
+
+---
+
+## Installation
+
+### Option 1: Via Marketplace (Recommended)
 
 ```bash
-# 1. 加入 marketplace 來源
+# 1. Add the marketplace source
 /plugin marketplace add Muheng1992/claude-agent-army
 
-# 2. 安裝 plugin
+# 2. Install the plugin
 /plugin install agent-army@claude-agent-army
 
-# 3. 初始化你的專案
+# 3. Initialize your project
 /agent-army:setup my-project
 ```
 
-### 方式二：本機測試
+### Option 2: Local Testing
 
 ```bash
 # Clone
 git clone https://github.com/Muheng1992/claude-agent-army.git
 
-# 啟動 Claude Code 並載入 plugin
+# Run Claude Code with the plugin
 claude --plugin-dir ./claude-agent-army
 ```
 
-### 方式三：寫入專案設定
+### Option 3: Project-scoped Install
 
-在你專案的 `.claude/settings.json` 中加入：
+Add to your project's `.claude/settings.json`:
 
 ```json
 {
@@ -131,78 +133,78 @@ claude --plugin-dir ./claude-agent-army
 ## Quick Start
 
 ```bash
-# 1. 安裝完成後，先讓它認識你的專案
+# 1. Let it learn your project
 /agent-army:onboard my-project
 
-# 2. 用一句話描述你要做什麼，然後放手
+# 2. Describe what you want, then let go
 /agent-army:autopilot Build a REST API with user auth, CRUD endpoints, and tests
 
-# 3. 它會自動：
-#    → 分析你的 codebase
-#    → 拆成 5-30 個原子任務
-#    → 啟動 tmux 迴圈
-#    → 逐一執行（Architect 設計 → Implementer 寫碼 → Tester 測試）
-#    → 每個任務完成後自動 git commit checkpoint
-#    → 全部完成後停止
+# 3. It will automatically:
+#    → Analyze your codebase
+#    → Decompose into 5-30 atomic tasks
+#    → Launch a tmux loop
+#    → Execute each task (Architect designs → Implementer codes → Tester tests)
+#    → Git commit checkpoint after each task
+#    → Stop when everything is done
 
-# 4. 監控進度
+# 4. Monitor progress
 /agent-army:autopilot status
 
-# 5. 需要停止
+# 5. Need to stop?
 /agent-army:autopilot stop
 ```
 
 ---
 
-## Autopilot 安全機制
+## Autopilot Safety Limits
 
-Autopilot 有內建的安全保護，防止失控：
+Autopilot has built-in safeguards to prevent runaway execution:
 
-| 限制 | 預設值 | 說明 |
-|------|--------|------|
-| 最大迭代次數 | 50 | 防止無限迴圈 |
-| 最大花費 | $25.00 | 防止 token 爆預算 |
-| 最大時長 | 240 分鐘 | 防止跑到天荒地老 |
-| 單次迭代上限 | $5.00 | 防止單次爆費 |
-| 冷卻間隔 | 30 秒 | Rate limiting |
+| Limit | Default | Purpose |
+|-------|---------|---------|
+| Max iterations | 50 | Prevent infinite loops |
+| Max cost | $25.00 | Prevent token budget blowout |
+| Max duration | 240 min | Prevent indefinite runtime |
+| Per-iteration cap | $5.00 | Prevent single iteration blowout |
+| Cooldown | 30 sec | Rate limiting between iterations |
 
-每次迭代完成後自動建立 `autopilot:` 前綴的 git commit，可隨時 rollback。
+Every completed iteration creates a git commit with `autopilot:` prefix — rollback anytime.
 
-緊急停止有三種方式：
-1. `/agent-army:autopilot stop`（graceful，完成當前任務後停）
-2. `tmux kill-session -t autopilot-{project}`（立即停止）
-3. `touch .claude/autopilot/STOP`（手動建立停止信號）
-
----
-
-## 內建模板
-
-`/agent-army:setup` 會安裝以下模板：
-
-| 類別 | 內容 |
-|------|------|
-| **Memory** | `MEMORY.md` + 結構化記憶檔案，跨 session 保持上下文 |
-| **Git Hooks** | pre-commit（檔案長度 + 敏感資料掃描）、commit-msg（格式驗證）、pre-push（品質提醒） |
-| **CI/CD** | GitHub Actions quality gate workflow（6 道檢查） |
-| **Keybindings** | Agent Army 常用指令的快捷鍵 |
-| **Workspace** | 多專案協調設定 |
+Three ways to stop:
+1. `/agent-army:autopilot stop` (graceful — finishes current task)
+2. `tmux kill-session -t autopilot-{project}` (immediate)
+3. `touch .claude/autopilot/STOP` (manual stop signal)
 
 ---
 
-## 系統需求
+## Built-in Templates
+
+`/agent-army:setup` installs these templates into your project:
+
+| Category | Contents |
+|----------|----------|
+| **Memory** | `MEMORY.md` + structured memory files for cross-session context |
+| **Git Hooks** | pre-commit (file length + secret scanning), commit-msg (format validation), pre-push (quality reminder) |
+| **CI/CD** | GitHub Actions quality gate workflow (6 checks) |
+| **Keybindings** | Keyboard shortcuts for common Agent Army commands |
+| **Workspace** | Multi-project coordination settings |
+
+---
+
+## Requirements
 
 - **Claude Code CLI** v1.0.33+
-- **tmux**（autopilot 需要）：`brew install tmux`
-- **環境變數**：`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+- **tmux** (required for autopilot): `brew install tmux`
+- **Environment variable**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
 
 ---
 
 ## License
 
-MIT — 自由使用、修改、分發。
+MIT — free to use, modify, and distribute.
 
 ---
 
-## 作者
+## Author
 
 [@Muheng1992](https://github.com/Muheng1992)
