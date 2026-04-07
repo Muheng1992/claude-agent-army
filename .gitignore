@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+# Daemon runtime data
+daemon/data/
+daemon/.claude/
+
+# Autopilot runtime
+.claude/autopilot/logs/
+.claude/autopilot/autopilot.lock
+.claude/autopilot/STOP
+.claude/autopilot/retries.json
+
+# OS
+.DS_Store
